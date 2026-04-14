@@ -1,8 +1,10 @@
 #This is the main
+import threading
+import time
 import pygame
 import random 
 import sys
-SIZE = 100
+SIZE = 600
 pygame.init()
 
 # Konstanten
@@ -41,17 +43,30 @@ class View:
         return self.pos_y
 
 class Game:
-    def __init__(self,n):
+    def __init__(self,n,v):
         self.board = [[random.randint(0, 1) for _ in range(n)] for _ in range(n)]
         self.n = n
         self.s = 0.5
+        self.nextboard =self.board
+        self.calcing =False
+        self.view = v
+
     def print(self):
         print(self.board)
     def size(self):
         return self.n
     def speed(self):
         return self.s
+    
     def tick(self):
+        if self.calcing:
+            return
+        self.board = self.nextboard
+        self.calcing = True
+        thread = threading.Thread(target=self.calc_nextboard,daemon=True)
+        thread.start()
+        
+    def calc_nextboard(self):
         new_board = [[0 for _ in range(self.n)] for _ in range(self.n)]
         for i in range(0,len(self.board)):
             for j in range(0,self.n):
@@ -63,7 +78,12 @@ class Game:
                 else:
                     new_board[i][j] = 0
 
-        self.board = new_board
+        self.nextboard = new_board
+        self.calcing = False
+        
+    
+    
+
     def get_board(self):
         return self.board
 
@@ -81,16 +101,16 @@ class Game:
         return count
 
 def draw_elements(v: View,board: Game):
-    """Hier passiert alles, was mit der Grafik zu tun hat."""
-    # Hintergrund füllen (löscht das Bild vom vorherigen Frame)
+    # """Hier passiert alles, was mit der Grafik zu tun hat."""
+    # # Hintergrund füllen (löscht das Bild vom vorherigen Frame)
     screen.fill(BLACK)
     size = v.get_zoom()
     posx = v.get_x()
     posy = v.get_y()
-    startindex_x= int(posx/size)
-    startindex_y= int(posy/size)
-    endindex_x= startindex_x+int(WIDTH/size) +2
-    endindex_y= startindex_y+int(HEIGHT/size) +2
+    startindex_x= max(0,int(posx/size))
+    startindex_y= max(0,int(posy/size))
+    endindex_x= min(startindex_x+int(WIDTH/size) +2,board.size()-1)
+    endindex_y= min(startindex_y+int(HEIGHT/size) +2,board.size()-1)
 
     for i in range(startindex_x, endindex_x+1):
         for y in range(startindex_y, endindex_y+1):
@@ -109,8 +129,9 @@ def draw_elements(v: View,board: Game):
 
 
 def main():
-    game = Game(SIZE)
     viewer = View()
+
+    game = Game(SIZE,viewer)
     running = True
     counter = 0
     simulating = True
