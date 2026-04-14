@@ -44,10 +44,10 @@ class View:
 
 class Game:
     def __init__(self,n,v):
-        self.board = [[random.randint(0, 1) for _ in range(n)] for _ in range(n)]
+        self.nextboard = [[random.randint(0, 1) for _ in range(n)] for _ in range(n)]
         self.n = n
         self.s = 0.5
-        self.nextboard =self.board
+        self.board =[[0 for _ in range(n)] for _ in range(n)]
         self.calcing =False
         self.view = v
 
@@ -61,24 +61,23 @@ class Game:
     def tick(self):
         if self.calcing:
             return
+        x = self.board
         self.board = self.nextboard
+        self.nextboard = x
         self.calcing = True
         thread = threading.Thread(target=self.calc_nextboard,daemon=True)
         thread.start()
         
     def calc_nextboard(self):
-        new_board = [[0 for _ in range(self.n)] for _ in range(self.n)]
         for i in range(0,len(self.board)):
             for j in range(0,self.n):
                 count = self.count_neighbors(i,j)
                 if self.board[i][j] == 1 and (count == 2 or count == 3):
-                    new_board[i][j] = 1
+                    self.nextboard[i][j] = 1
                 elif self.board[i][j] == 0 and count == 3:
-                    new_board[i][j] = 1
+                    self.nextboard[i][j] = 1
                 else:
-                    new_board[i][j] = 0
-
-        self.nextboard = new_board
+                    self.nextboard[i][j] = 0
         self.calcing = False
         
     
