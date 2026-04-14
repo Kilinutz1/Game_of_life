@@ -29,9 +29,10 @@ class View:
     def move_down(self):
         self.pos_y+=1
     def zoom_in(self):
-        self.zoom-=1
-    def zoom_out(self):
         self.zoom+=1
+    def zoom_out(self):
+        if self.zoom>1:
+            self.zoom-=1
     def get_zoom(self):
         return self.zoom
     def get_x(self):
@@ -43,7 +44,7 @@ class Game:
     def __init__(self,n):
         self.board = [[random.randint(0, 1) for _ in range(n)] for _ in range(n)]
         self.n = n
-        self.s = 5
+        self.s = 0.5
     def print(self):
         print(self.board)
     def size(self):
@@ -51,10 +52,9 @@ class Game:
     def speed(self):
         return self.s
     def tick(self):
-        n = len(self.board)
-        new_board = [[0 for _ in range(n)] for _ in range(n)]
+        new_board = [[0 for _ in range(self.n)] for _ in range(self.n)]
         for i in range(0,len(self.board)):
-            for j in range(0,len(self.board)):
+            for j in range(0,self.n):
                 count = self.count_neighbors(i,j)
                 if self.board[i][j] == 1 and (count == 2 or count == 3):
                     new_board[i][j] = 1
@@ -113,13 +113,14 @@ def main():
     viewer = View()
     running = True
     counter = 0
+    simulating = True
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    pass
+                    simulating = not simulating
         keys = pygame.key.get_pressed()
 
         if keys[pygame.K_w]:
@@ -130,10 +131,15 @@ def main():
             viewer.move_left()
         if keys[pygame.K_d]:
             viewer.move_right()
+        if keys[pygame.K_r]:
+            viewer.zoom_in()
+        if keys[pygame.K_t]:
+            viewer.zoom_out()    
         counter+=1
-        if(counter/FPS_UPDATE ==game.speed()):
+        if(counter/FPS_UPDATE >game.speed()):
             counter=0
-            game.tick()
+            if simulating:
+                game.tick()
         draw_elements(viewer,game)
         clock.tick(FPS_UPDATE)
 
