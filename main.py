@@ -16,6 +16,8 @@ BLACK = (0,0,0)
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Game_of_life")
 clock = pygame.time.Clock()
+ZOOMSPEED = 5
+
 
 class View:
     def __init__(self):
@@ -44,7 +46,7 @@ class View:
 
 class Game:
     def __init__(self,n,v):
-        self.nextboard = [[random.randint(0, 1) for _ in range(n)] for _ in range(n)]
+        self.nextboard = [[1 if random.randint(0, 15)==10 else 0 for _ in range(n)] for _ in range(n)]
         self.n = n
         self.s = 0.5
         self.board =[[0 for _ in range(n)] for _ in range(n)]
@@ -99,6 +101,9 @@ class Game:
             ic+=1
         return count
 
+
+
+
 def draw_elements(v: View,board: Game):
     # """Hier passiert alles, was mit der Grafik zu tun hat."""
     # # Hintergrund füllen (löscht das Bild vom vorherigen Frame)
@@ -134,6 +139,9 @@ def main():
     running = True
     counter = 0
     simulating = True
+    changes = True
+    zoomincounter=0
+    zoomoutcounter=0
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -141,27 +149,49 @@ def main():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     simulating = not simulating
+                
         keys = pygame.key.get_pressed()
 
         if keys[pygame.K_w]:
             viewer.move_up()
+            changes = True
         if keys[pygame.K_s]:
             viewer.move_down()
+            changes = True
+
         if keys[pygame.K_a]:
             viewer.move_left()
+            changes = True
+
         if keys[pygame.K_d]:
+            
             viewer.move_right()
+            changes = True
+
         if keys[pygame.K_r]:
-            viewer.zoom_in()
+            zoomincounter +=1
+            if zoomincounter>= ZOOMSPEED:
+                viewer.zoom_in()
+                changes = True
+                zoomincounter = 0
+
         if keys[pygame.K_t]:
-            viewer.zoom_out()    
+            zoomoutcounter+=1
+            if zoomoutcounter>=ZOOMSPEED:
+                viewer.zoom_out()    
+                changes = True
+                zoomoutcounter = 0
+
         counter+=1
         if(counter/FPS_UPDATE >game.speed()):
             counter=0
             if simulating:
                 game.tick()
-        draw_elements(viewer,game)
+                changes = True
+        if changes: 
+            draw_elements(viewer,game)
         clock.tick(FPS_UPDATE)
+        changes =False
 
 
     pygame.quit()
