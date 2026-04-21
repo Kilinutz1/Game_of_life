@@ -19,6 +19,16 @@ clock = pygame.time.Clock()
 ZOOMSPEED = 5
 
 
+button_start = pygame.Rect(300, 250, 200, 50)
+font = pygame.font.SysFont("Arial", 24)
+text_surf = font.render("Start Game", True, (0, 0, 0))
+text_rect = text_surf.get_rect(center=button_start.center)
+
+button_adjust = pygame.Rect(300, 350, 200, 50)
+text_surf_a = font.render("Customize Game", True, (0, 0, 0))
+text_rect_a = text_surf_a.get_rect(center=button_adjust.center)
+
+
 class View:
     def __init__(self):
         self.pos_x=0
@@ -33,10 +43,10 @@ class View:
     def move_down(self):
         self.pos_y+=1
     def zoom_in(self):
-        self.zoom+=1
+        self.zoom+=0.2
     def zoom_out(self):
-        if self.zoom>1:
-            self.zoom-=1
+        if self.zoom>1.1:
+            self.zoom-=0.2
     def get_zoom(self):
         return self.zoom
     def get_x(self):
@@ -59,7 +69,22 @@ class Game:
         return self.n
     def speed(self):
         return self.s
-    
+    def reset(self):
+        while self.calcing:
+            pass
+        self.nextboard = [[1 if random.randint(0, 15)==10 else 0 for _ in range(self.n)] for _ in range(self.n)]
+        self.board =[[0 for _ in range(self.n)] for _ in range(self.n)]
+    def copyboard_to_nextboard(self):
+        while(self.calcing):
+            pass
+        for i in range(self.n):
+            for y in range (self.n):
+                self.nextboard[i][y]=self.board[i][y]
+    def update(self,x,y):
+        if(self.board[x][y]==0):
+            self.board[x][y]=1
+            return
+        self.board[x][y]=0
     def tick(self):
         if self.calcing:
             return
@@ -131,6 +156,16 @@ def draw_elements(v: View,board: Game):
     pygame.display.flip()
 
 
+def draw_main_menu():
+    screen.fill(BLACK)
+    pygame.draw.rect(screen, (BLUE), button_start, border_radius=12)
+    screen.blit(text_surf, text_rect)
+    pygame.draw.rect(screen, (BLUE), button_adjust, border_radius=12)
+    screen.blit(text_surf_a, text_rect_a)
+
+    pygame.display.flip()
+
+
 
 def main():
     viewer = View()
@@ -142,56 +177,130 @@ def main():
     changes = True
     zoomincounter=0
     zoomoutcounter=0
+    mode = 1
     while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
-                    simulating = not simulating
-                
-        keys = pygame.key.get_pressed()
-
-        if keys[pygame.K_w]:
-            viewer.move_up()
-            changes = True
-        if keys[pygame.K_s]:
-            viewer.move_down()
-            changes = True
-
-        if keys[pygame.K_a]:
-            viewer.move_left()
-            changes = True
-
-        if keys[pygame.K_d]:
+        
+        if mode == 0:
             
-            viewer.move_right()
-            changes = True
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                    
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        simulating = not simulating
+                    
+            keys = pygame.key.get_pressed()
 
-        if keys[pygame.K_r]:
-            zoomincounter +=1
-            if zoomincounter>= ZOOMSPEED:
-                viewer.zoom_in()
+            if keys[pygame.K_w]:
+                viewer.move_up()
                 changes = True
-                zoomincounter = 0
+            if keys[pygame.K_s]:
+                viewer.move_down()
+                changes = True
 
-        if keys[pygame.K_t]:
-            zoomoutcounter+=1
-            if zoomoutcounter>=ZOOMSPEED:
-                viewer.zoom_out()    
+            if keys[pygame.K_a]:
+                viewer.move_left()
                 changes = True
-                zoomoutcounter = 0
 
-        counter+=1
-        if(counter/FPS_UPDATE >game.speed()):
-            counter=0
-            if simulating:
-                game.tick()
+            if keys[pygame.K_d]:
+                
+                viewer.move_right()
                 changes = True
-        if changes: 
+
+            if keys[pygame.K_r]:
+                zoomincounter +=1
+                if zoomincounter>= ZOOMSPEED:
+                    viewer.zoom_in()
+                    changes = True
+                    zoomincounter = 0
+
+            if keys[pygame.K_t]:
+                zoomoutcounter+=1
+                if zoomoutcounter>=ZOOMSPEED:
+                    viewer.zoom_out()    
+                    changes = True
+                    zoomoutcounter = 0
+            if keys[pygame.K_ESCAPE]:
+                mode = 1
+                game.reset()
+                simulating = True
+                continue
+
+            counter+=1
+            if(counter/FPS_UPDATE >game.speed()):
+                counter=0
+                if simulating:
+                    game.tick()
+                    changes = True
+            if changes: 
+                draw_elements(viewer,game)
+            changes =False
+
+        elif mode == 1:
+            for event in pygame.event.get():
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if button_start.collidepoint(event.pos):
+                        mode = 0
+                        
+                    if button_adjust.collidepoint(event.pos):
+                        mode = 2
+                if event.type == pygame.QUIT:
+                    running = False
+            draw_main_menu()
+
+        elif mode == 2:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    x,y = event.pos
+                    truex = x + viewer.get_x()
+                    truey = y + viewer.get_y()
+                    if truex<0 or truey < 0:
+                        pass
+                    else:
+                        xposarray = int(truex/viewer.get_zoom())
+                        yposarray = int(truey/viewer.get_zoom())
+                        if xposarray<game.size() and yposarray<game.size():
+                            game.update(xposarray,yposarray)
+
+
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_w]:
+                viewer.move_up()
+            if keys[pygame.K_s]:
+                viewer.move_down()
+
+            if keys[pygame.K_a]:
+                viewer.move_left()
+
+            if keys[pygame.K_d]:
+                
+                viewer.move_right()
+
+            if keys[pygame.K_r]:
+                zoomincounter +=1
+                if zoomincounter>= ZOOMSPEED:
+                    viewer.zoom_in()
+                    zoomincounter = 0
+
+            if keys[pygame.K_t]:
+                zoomoutcounter+=1
+                if zoomoutcounter>=ZOOMSPEED:
+                    viewer.zoom_out()    
+                    zoomoutcounter = 0
+            if keys[pygame.K_ESCAPE]:
+                mode = 1
+                game.copyboard_to_nextboard()
             draw_elements(viewer,game)
+
+            
+
+
+        
         clock.tick(FPS_UPDATE)
-        changes =False
+        
 
 
     pygame.quit()
