@@ -53,7 +53,12 @@ text_surf_dec_dens = font2.render("-", True, (0, 0, 0))
 text_rect_inc_dens = text_surf_inc_dens.get_rect(center=button_inc_dens.center)
 text_rect_dec_dens = text_surf_dec_dens.get_rect(center=button_dec_dens.center)
 
-
+button_save  = pygame.Rect(10, 90, 30, 30)
+button_load  = pygame.Rect(50, 90, 30, 30)
+text_surf_load = font2.render("load", True, (0, 0, 0))
+text_surf_save = font2.render("save", True, (0, 0, 0))
+text_rect_save = text_surf_save.get_rect(center=button_save.center)
+text_rect_load = text_surf_load.get_rect(center=button_load.center)
 
 
 
@@ -105,17 +110,24 @@ class Game:
         self.s+=0.05
     def speed(self):
         return self.s
+    def reset_rand(self):
+        while self.calcing:
+            pass
+        self.board = [[1 if random.randint(0, self.density)==0 else 0 for _ in range(self.n)] for _ in range(self.n)]
+        self.copyboard_to_nextboard()
+
     def reset(self):
         while self.calcing:
             pass
-        self.nextboard = [[1 if random.randint(0, self.density)==0 else 0 for _ in range(self.n)] for _ in range(self.n)]
         self.board =[[0 for _ in range(self.n)] for _ in range(self.n)]
+        self.copyboard_to_nextboard()
     def copyboard_to_nextboard(self):
         while(self.calcing):
             pass
         for i in range(self.n):
             for y in range (self.n):
                 self.nextboard[i][y]=self.board[i][y]
+    
     def increase_density(self):
         if self.density>0:
             self.density-=1
@@ -150,9 +162,42 @@ class Game:
                     self.nextboard[i][j] = 0
         self.calcing = False
         
-    
-    
+    def save_board(self,name):
+        try:
+            with open(name, "w", encoding="utf-8") as f:
+                o = ""+str(self.n)+"\n"
+                for i in range(self.n):
+                    for y in range(self.n):
+                        o= o+str(self.board[i][y])
+                    o=o+"\n"
+                f.write(o)
+        except:
+            pass
+    def load_board(self,name):
+        try:
+            with open(name, "r", encoding="utf-8") as file:
+                content = file.read()
+        except:
+            return
+        lines = content.split("\n")
+        length = int(lines[0])
+        b = [[0 for _ in range(length)] for _ in range(length)]          
 
+        for i in range (length):
+            line=lines[1+i]
+            if len(line)!=length:
+                return
+            for y in range (length):
+                if(line[y]==0 or [y==1]):
+                    b[i][y] = int(line[y])                    
+                else:
+                    return
+            
+        self.board=b
+        self.copyboard_to_nextboard()
+        
+
+        
     def get_board(self):
         return self.board
 
@@ -225,6 +270,11 @@ def draw_main_menu(g: Game):
     screen.blit(text_surf_dec_dens, text_rect_dec_dens)
     screen.blit(text_surf_current_dens, (100, HEIGHT-85))
     screen.blit(text_surf_current_speed, (100, HEIGHT-45))
+
+    pygame.draw.rect(screen, (BLUE), button_load, border_radius=12)
+    screen.blit(text_surf_load, text_rect_load)
+    pygame.draw.rect(screen, (BLUE), button_save, border_radius=12)
+    screen.blit(text_surf_save, text_rect_save)
 
     pygame.display.flip()
 
@@ -309,9 +359,8 @@ def main():
                         mode = 2
                     if button_newboard.collidepoint(event.pos):
                         game.reset()
-                        game.copyboard_to_nextboard()
                     if button_newrandom.collidepoint(event.pos):
-                        game.reset()
+                        game.reset_rand()
                     if button_inc_dens.collidepoint(event.pos):
                         game.decrease_density()
 
@@ -322,6 +371,10 @@ def main():
                         game.dec_speed()
                     if button_dec_speed.collidepoint(event.pos):
                         game.inc_speed()
+                    if button_save.collidepoint(event.pos):
+                        game.save_board("hi")
+                    if button_load.collidepoint(event.pos):
+                        game.load_board("hi")
                 if event.type == pygame.QUIT:
                     running = False
             draw_main_menu(game)
