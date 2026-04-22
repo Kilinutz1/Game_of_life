@@ -85,13 +85,14 @@ class View:
 
 class Game:
     def __init__(self,n,v):
-        self.nextboard = [[1 if random.randint(0, 15)==10 else 0 for _ in range(n)] for _ in range(n)]
+        self.board = [[1 if random.randint(0, 15)==10 else 0 for _ in range(n)] for _ in range(n)]
         self.n = n
         self.s = 0.5
-        self.board =[[0 for _ in range(n)] for _ in range(n)]
+        self.nextboard =[[0 for _ in range(n)] for _ in range(n)]
         self.calcing =False
         self.view = v
         self.density = 15
+        self.copyboard_to_nextboard()
 
     def print(self):
         print(self.board)
