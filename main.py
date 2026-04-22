@@ -27,6 +27,35 @@ text_rect = text_surf.get_rect(center=button_start.center)
 button_adjust = pygame.Rect(300, 350, 200, 50)
 text_surf_a = font.render("Customize Game", True, (0, 0, 0))
 text_rect_a = text_surf_a.get_rect(center=button_adjust.center)
+font2 = pygame.font.SysFont("Arial", 15)
+
+button_newrandom = pygame.Rect(WIDTH-80, HEIGHT-120, 50, 50)
+text_surf_rand = font2.render("re-gen", True, (0, 0, 0))
+text_rect_rand = text_surf_rand.get_rect(center=button_newrandom.center)
+
+button_newboard = pygame.Rect(WIDTH-80, HEIGHT-60, 50, 50)
+text_surf_newboard = font2.render("clear", True, (0, 0, 0))
+text_rect_newboard = text_surf_newboard.get_rect(center=button_newboard.center)
+
+
+
+button_inc_speed  = pygame.Rect(10, HEIGHT-50, 30, 30)
+button_dec_speed  = pygame.Rect(50, HEIGHT-50, 30, 30)
+text_surf_inc_speed = font2.render("+", True, (0, 0, 0))
+text_surf_dec_speed = font2.render("-", True, (0, 0, 0))
+text_rect_inc_speed = text_surf_inc_speed.get_rect(center=button_inc_speed.center)
+text_rect_dec_speed = text_surf_dec_speed.get_rect(center=button_dec_speed.center)
+
+button_inc_dens  = pygame.Rect(10, HEIGHT-90, 30, 30)
+button_dec_dens  = pygame.Rect(50, HEIGHT-90, 30, 30)
+text_surf_inc_dens = font2.render("+", True, (0, 0, 0))
+text_surf_dec_dens = font2.render("-", True, (0, 0, 0))
+text_rect_inc_dens = text_surf_inc_dens.get_rect(center=button_inc_dens.center)
+text_rect_dec_dens = text_surf_dec_dens.get_rect(center=button_dec_dens.center)
+
+
+
+
 
 
 class View:
@@ -62,17 +91,23 @@ class Game:
         self.board =[[0 for _ in range(n)] for _ in range(n)]
         self.calcing =False
         self.view = v
+        self.density = 15
 
     def print(self):
         print(self.board)
     def size(self):
         return self.n
+    def inc_speed(self):
+        if self.s>0.22:
+            self.s-=0.05
+    def dec_speed(self):
+        self.s+=0.05
     def speed(self):
         return self.s
     def reset(self):
         while self.calcing:
             pass
-        self.nextboard = [[1 if random.randint(0, 15)==10 else 0 for _ in range(self.n)] for _ in range(self.n)]
+        self.nextboard = [[1 if random.randint(0, self.density)==0 else 0 for _ in range(self.n)] for _ in range(self.n)]
         self.board =[[0 for _ in range(self.n)] for _ in range(self.n)]
     def copyboard_to_nextboard(self):
         while(self.calcing):
@@ -80,6 +115,13 @@ class Game:
         for i in range(self.n):
             for y in range (self.n):
                 self.nextboard[i][y]=self.board[i][y]
+    def increase_density(self):
+        if self.density>0:
+            self.density-=1
+    def decrease_density(self):
+        self.density+=1
+    def get_density(self):
+        return self.density
     def update(self,x,y):
         if(self.board[x][y]==0):
             self.board[x][y]=1
@@ -156,12 +198,32 @@ def draw_elements(v: View,board: Game):
     pygame.display.flip()
 
 
-def draw_main_menu():
+def draw_main_menu(g: Game):
+    text_surf_current_speed = font2.render(f"Speed: {round(g.speed(), 2)}", True,BLUE)
+    text_surf_current_dens = font2.render(f"Density: {g.get_density()}", True, BLUE)
+
     screen.fill(BLACK)
     pygame.draw.rect(screen, (BLUE), button_start, border_radius=12)
     screen.blit(text_surf, text_rect)
     pygame.draw.rect(screen, (BLUE), button_adjust, border_radius=12)
     screen.blit(text_surf_a, text_rect_a)
+
+    pygame.draw.rect(screen, (BLUE), button_newboard, border_radius=12)
+    screen.blit(text_surf_newboard, text_rect_newboard)
+    pygame.draw.rect(screen, (BLUE), button_newrandom, border_radius=12)
+    screen.blit(text_surf_rand, text_rect_rand)
+
+    pygame.draw.rect(screen, (BLUE), button_inc_speed, border_radius=12)
+    screen.blit(text_surf_inc_speed, text_rect_inc_speed)
+    pygame.draw.rect(screen, (BLUE), button_dec_speed, border_radius=12)
+    screen.blit(text_surf_dec_speed, text_rect_dec_speed)
+
+    pygame.draw.rect(screen, (BLUE), button_inc_dens, border_radius=12)
+    screen.blit(text_surf_inc_dens, text_rect_inc_dens)
+    pygame.draw.rect(screen, (BLUE), button_dec_dens, border_radius=12)
+    screen.blit(text_surf_dec_dens, text_rect_dec_dens)
+    screen.blit(text_surf_current_dens, (100, HEIGHT-85))
+    screen.blit(text_surf_current_speed, (100, HEIGHT-45))
 
     pygame.display.flip()
 
@@ -223,7 +285,6 @@ def main():
                     zoomoutcounter = 0
             if keys[pygame.K_ESCAPE]:
                 mode = 1
-                game.reset()
                 simulating = True
                 continue
 
@@ -245,9 +306,24 @@ def main():
                         
                     if button_adjust.collidepoint(event.pos):
                         mode = 2
+                    if button_newboard.collidepoint(event.pos):
+                        game.reset()
+                        game.copyboard_to_nextboard()
+                    if button_newrandom.collidepoint(event.pos):
+                        game.reset()
+                    if button_inc_dens.collidepoint(event.pos):
+                        game.decrease_density()
+
+
+                    if button_dec_dens.collidepoint(event.pos):
+                        game.increase_density()
+                    if button_inc_speed.collidepoint(event.pos):
+                        game.dec_speed()
+                    if button_dec_speed.collidepoint(event.pos):
+                        game.inc_speed()
                 if event.type == pygame.QUIT:
                     running = False
-            draw_main_menu()
+            draw_main_menu(game)
 
         elif mode == 2:
             for event in pygame.event.get():
