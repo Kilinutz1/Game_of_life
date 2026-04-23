@@ -38,6 +38,10 @@ text_surf_newboard = font2.render("clear", True, (0, 0, 0))
 text_rect_newboard = text_surf_newboard.get_rect(center=button_newboard.center)
 
 
+button_textfield = pygame.Rect(100, 90, 200, 30)
+
+
+
 
 button_inc_speed  = pygame.Rect(10, HEIGHT-50, 30, 30)
 button_dec_speed  = pygame.Rect(50, HEIGHT-50, 30, 30)
@@ -244,7 +248,7 @@ def draw_elements(v: View,board: Game):
     pygame.display.flip()
 
 
-def draw_main_menu(g: Game):
+def draw_main_menu(g: Game,text: str):
     text_surf_current_speed = font2.render(f"Speed: {round(g.speed(), 2)}", True,BLUE)
     text_surf_current_dens = font2.render(f"Density: {g.get_density()}", True, BLUE)
 
@@ -276,6 +280,11 @@ def draw_main_menu(g: Game):
     pygame.draw.rect(screen, (BLUE), button_save, border_radius=12)
     screen.blit(text_surf_save, text_rect_save)
 
+    text_surf_textfield = font2.render(text, True, (0, 0, 0))
+    text_rect_textfield = text_surf_textfield.get_rect(center=button_textfield.center)
+    pygame.draw.rect(screen, (BLUE), button_textfield, border_radius=12)
+    screen.blit(text_surf_textfield, text_rect_textfield)
+
     pygame.display.flip()
 
 
@@ -291,6 +300,7 @@ def main():
     zoomincounter=0
     zoomoutcounter=0
     mode = 1
+    text = "Input here"
     while running:
         
         if mode == 0:
@@ -363,7 +373,8 @@ def main():
                         game.reset_rand()
                     if button_inc_dens.collidepoint(event.pos):
                         game.decrease_density()
-
+                    if button_textfield.collidepoint(event.pos):
+                        mode = 3
 
                     if button_dec_dens.collidepoint(event.pos):
                         game.increase_density()
@@ -372,12 +383,12 @@ def main():
                     if button_dec_speed.collidepoint(event.pos):
                         game.inc_speed()
                     if button_save.collidepoint(event.pos):
-                        game.save_board("hi")
+                        game.save_board(text)
                     if button_load.collidepoint(event.pos):
-                        game.load_board("hi")
+                        game.load_board(text)
                 if event.type == pygame.QUIT:
                     running = False
-            draw_main_menu(game)
+            draw_main_menu(game,text)
 
         elif mode == 2:
             for event in pygame.event.get():
@@ -424,7 +435,33 @@ def main():
                 mode = 1
                 game.copyboard_to_nextboard()
             draw_elements(viewer,game)
+        elif mode == 3:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if not button_textfield.collidepoint(event.pos):
+                        mode = 1
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_BACKSPACE:
+                        if text !="Input here":
+                            if len(text)==1:
+                                text = "Input here"
+                            else:
+                                text = text[:-1]
+                    elif event.unicode.isalpha() or event.unicode in "._0123456789":
+                        if text == "Input here":
+                            text= ""
+                        if len(text)<50:
+                            text += event.unicode
 
+
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_ESCAPE]:
+                mode = 1
+            
+
+            draw_main_menu(game,text)
             
 
 
