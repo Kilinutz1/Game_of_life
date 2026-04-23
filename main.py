@@ -249,8 +249,8 @@ def draw_elements(v: View,board: Game):
 
 
 def draw_main_menu(g: Game,text: str):
-    text_surf_current_speed = font2.render(f"Speed: {round(g.speed(), 2)}", True,BLUE)
-    text_surf_current_dens = font2.render(f"Density: {g.get_density()}", True, BLUE)
+    text_surf_current_speed = font2.render(f"Speed: {round(1/g.speed(), 2)}", True,BLUE)
+    text_surf_current_dens = font2.render(f"Density: {round(1/(1+g.get_density()),2)}", True, BLUE)
 
     screen.fill(BLACK)
     pygame.draw.rect(screen, (BLUE), button_start, border_radius=12)
@@ -372,16 +372,16 @@ def main():
                     if button_newrandom.collidepoint(event.pos):
                         game.reset_rand()
                     if button_inc_dens.collidepoint(event.pos):
-                        game.decrease_density()
+                        game.increase_density()
                     if button_textfield.collidepoint(event.pos):
                         mode = 3
 
                     if button_dec_dens.collidepoint(event.pos):
-                        game.increase_density()
+                        game.decrease_density()
                     if button_inc_speed.collidepoint(event.pos):
-                        game.dec_speed()
-                    if button_dec_speed.collidepoint(event.pos):
                         game.inc_speed()
+                    if button_dec_speed.collidepoint(event.pos):
+                        game.dec_speed()
                     if button_save.collidepoint(event.pos):
                         game.save_board(text)
                     if button_load.collidepoint(event.pos):
